@@ -1,139 +1,198 @@
-# 🟣📘 PROYECTO: CRUD PAPELERÍA EN FLUTTER + FIREBASE
-
-Guía completa paso a paso (modo práctica para estudiantes)
+¡Hola! Como desarrollador de software, me encanta la estructura que planteas. Vamos a construir este sistema de papelería utilizando **Flutter** y **Firebase**, integrando la filosofía de **Antigravity** (que se enfoca en la eficiencia y estructuras de alto rendimiento) para que tus estudiantes tengan una base sólida.
 
 ---
 
-# 1. 📁 ESTRUCTURA DE CARPETAS
+## 🚀 Plan de Trabajo: CRUD Papelería "XflutterAlvarado_0456"
 
-Crear manualmente:
+### 1. Preparación del Entorno
+* **Carpeta Raíz:** `XflutterAlvarado_0456`
+* **Subcarpeta del Proyecto:** `crudpapeleria`
+* **Comando de creación:** ```bash
+    mkdir XflutterAlvarado_0456
+    cd XflutterAlvarado_0456
+    flutter create crudpapeleria
+    ```
 
+### 2. Configuración en Firebase Console
+1.  Ve a [Firebase Console](https://console.firebase.google.com/).
+2.  Crea un proyecto llamado `Papeleria-Alvarado`.
+3.  Habilita **Cloud Firestore** en modo de prueba.
+4.  Crea una colección llamada **`productos`**.
+5.  Registra tu app (Android/iOS/Web) y descarga el archivo de configuración (`google-services.json` para Android).
+
+---
+
+### 3. Dependencias y `pubspec.yaml`
+Para que el proyecto funcione, necesitamos las librerías oficiales de Firebase. Así se modifica el archivo:
+
+**Archivo:** `pubspec.yaml`
+```yaml
+dependencies:
+  flutter:
+    sdk: flutter
+  # Librerías esenciales
+  firebase_core: ^3.0.0
+  cloud_firestore: ^5.0.0
+  cupertino_icons: ^1.0.6
 ```
-XflutterAlvarado_0456/
- └── crudpapeleria/
-```
+*Ejecuta `flutter pub get` después de guardar.*
 
-Luego dentro ejecutas:
+---
 
-```
-flutter create crudpapeleria
-```
+### 4. Metodología de Trabajo (Agentes y Roles)
+Para una práctica guiada bajo el concepto de **Antigravity**, dividiremos el flujo de trabajo en "Agentes Especializados":
 
-Estructura final:
+| Agente | Rol | Skill (Habilidad) |
+| :--- | :--- | :--- |
+| **Arquitecto** | Estructura de Datos | Definir campos: `nombre`, `precio`, `stock`. |
+| **Conector** | Integración Firebase | Configurar `Firebase.initializeApp()`. |
+| **Gestor CRUD** | Lógica de Negocio | Funciones `add`, `get`, `update`, `delete`. |
+| **Diseñador UI** | Experiencia de Usuario | Crear interfaces en escala de morados y azules. |
 
-```
+---
+
+### 5. Estructura de Archivos
+```text
 crudpapeleria/
- ├── lib/
- │   ├── main.dart
- │   ├── screens/
- │   │   ├── home_screen.dart
- │   │   ├── add_product.dart
- │   │   └── edit_product.dart
- │   ├── services/
- │   │   └── firestore_service.dart
- │   └── widgets/
- │       └── product_card.dart
- ├── pubspec.yaml
+├── lib/
+│   ├── main.dart             # Punto de entrada
+│   ├── services/
+│   │   └── firebase_service.dart # Lógica de Firestore
+│   └── pages/
+│       ├── home_page.dart    # Lista de productos (Read/Delete)
+│       └── add_product_page.dart # Formulario (Create/Update)
+└── assets/                   # Iconos y logos
 ```
 
 ---
 
-# 2. ⚡ TRABAJAR CON ANTIGRAVITY
+### 6. Implementación del Código (Full Funcional)
 
-Antigravity se usa como apoyo para:
+#### A. Servicio de Base de Datos
+**Archivo:** `lib/services/firebase_service.dart`
+```dart
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-* Generar interfaces
-* Optimizar código
-* Crear componentes UI
+FirebaseFirestore db = FirebaseFirestore.instance;
 
-Prompt sugerido:
+// CREATE & UPDATE (Save)
+Future<void> saveProduct(String name, double price, int stock, {String? id}) async {
+  if (id == null) {
+    await db.collection('productos').add({
+      'nombre': name,
+      'precio': price,
+      'stock': stock,
+    });
+  } else {
+    await db.collection('productos').doc(id).update({
+      'nombre': name,
+      'precio': price,
+      'stock': stock,
+    });
+  }
+}
 
-"""
-Crea una app Flutter con Firebase Firestore tipo CRUD para una papelería.
-Usa colores morados y azules, diseño moderno, tarjetas elegantes.
-Colección: productos (nombre, precio, stock).
-Pantalla principal con lista, botón para agregar, editar y eliminar.
-"""
+// READ
+Future<List> getProducts() async {
+  List products = [];
+  QuerySnapshot querySnapshot = await db.collection('productos').get();
+  for (var doc in querySnapshot.docs) {
+    final Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    products.add({...data, 'id': doc.id});
+  }
+  return products;
+}
 
----
-
-# 3. 🔥 CONFIGURAR FIREBASE
-
-1. Ir a: [https://console.firebase.google.com/](https://console.firebase.google.com/)
-2. Crear proyecto
-3. Agregar app Android
-4. Descargar google-services.json
-5. Colocarlo en:
-
-```
-android/app/
-```
-
----
-
-# 4. 📦 LIBRERÍAS NECESARIAS
-
-Agregar en pubspec.yaml:
-
-```
-dependencies:
-  flutter:
-    sdk: flutter
-
-  firebase_core: ^2.30.0
-  cloud_firestore: ^4.15.0
+// DELETE
+Future<void> deleteProduct(String id) async {
+  await db.collection('productos').doc(id).delete();
+}
 ```
 
----
+#### B. Interfaz de Usuario (UI) con Estética Morado/Azul
+**Archivo:** `lib/pages/home_page.dart`
+```dart
+import 'package:flutter/material.dart';
+import '../services/firebase_service.dart';
 
-# 5. ⚙️ CONFIGURAR pubspec.yaml
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _BorderedHomeState();
+}
 
-Ejemplo completo:
-
+class _BorderedHomeState extends State<HomePage> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Papelería Alvarado'),
+        backgroundColor: Colors.indigo[900], // Azul Oscuro
+      ),
+      body: FutureBuilder(
+        future: getProducts(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+              itemCount: snapshot.data?.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  color: Colors.deepPurple[50], // Morado tenue
+                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  child: ListTile(
+                    title: Text(snapshot.data?[index]['nombre'], 
+                          style: TextStyle(color: Colors.indigo[800], fontWeight: FontWeight.bold)),
+                    subtitle: Text('Precio: \$${snapshot.data?[index]['precio']} - Stock: ${snapshot.data?[index]['stock']}'),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
+                      onPressed: () async {
+                        await deleteProduct(snapshot.data?[index]['id']);
+                        setState(() {}); // Refrescar
+                      },
+                    ),
+                  ),
+                );
+              },
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepPurple,
+        onPressed: () { /* Navegar a formulario */ },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
 ```
-name: crudpapeleria
 
-dependencies:
-  flutter:
-    sdk: flutter
-
-  firebase_core: ^2.30.0
-  cloud_firestore: ^4.15.0
-```
-
-Luego ejecutar:
-
-```
-flutter pub get
-```
-
----
-
-# 6. 🧠 INICIALIZAR FIREBASE
-
-### main.dart
-
+#### C. Inicialización
+**Archivo:** `lib/main.dart`
 ```dart
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'screens/home_screen.dart';
+import 'pages/home_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(MyApp());
+  await Firebase.initializeApp(); // Punto crítico de conexión
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Papelería Cometa',
+      title: 'CRUD Papelería',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.indigo,
+        scaffoldBackgroundColor: Colors.grey[100],
       ),
-      home: HomeScreen(),
+      home: HomePage(),
     );
   }
 }
@@ -141,272 +200,10 @@ class MyApp extends StatelessWidget {
 
 ---
 
-# 7. 🔥 SERVICIO FIRESTORE (CRUD)
+### 7. Práctica Guiada para Estudiantes (Flow Antigravity)
+1.  **Módulo de Gravedad Cero:** Los estudiantes deben crear el modelo de datos en una hoja blanca antes de tocar el código.
+2.  **Módulo de Propulsión:** Configuración de Firebase. Es el "motor" del proyecto.
+3.  **Módulo de Órbita:** Implementar el `FutureBuilder`. Explicar que los datos "orbitan" entre la nube (Firestore) y la tierra (la App).
+4.  **Módulo de Control:** Los botones de editar y borrar deben tener colores contrastantes (Azul para acciones seguras, Morado para acciones creativas).
 
-### firestore_service.dart
-
-```dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-class FirestoreService {
-  final CollectionReference productos =
-      FirebaseFirestore.instance.collection('productos');
-
-  // CREATE
-  Future addProducto(String nombre, double precio, int stock) {
-    return productos.add({
-      'nombre': nombre,
-      'precio': precio,
-      'stock': stock,
-    });
-  }
-
-  // READ
-  Stream<QuerySnapshot> getProductos() {
-    return productos.snapshots();
-  }
-
-  // UPDATE
-  Future updateProducto(String id, String nombre, double precio, int stock) {
-    return productos.doc(id).update({
-      'nombre': nombre,
-      'precio': precio,
-      'stock': stock,
-    });
-  }
-
-  // DELETE
-  Future deleteProducto(String id) {
-    return productos.doc(id).delete();
-  }
-}
-```
-
----
-
-# 8. 🏠 HOME SCREEN (LISTAR)
-
-```dart
-import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
-import 'add_product.dart';
-import 'edit_product.dart';
-
-class HomeScreen extends StatelessWidget {
-  final FirestoreService service = FirestoreService();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Papelería Cometa')),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.deepPurple,
-        child: Icon(Icons.add),
-        onPressed: () {
-          Navigator.push(context,
-              MaterialPageRoute(builder: (_) => AddProduct()));
-        },
-      ),
-      body: StreamBuilder(
-        stream: service.getProductos(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) return CircularProgressIndicator();
-
-          var docs = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              var data = docs[index];
-
-              return Card(
-                color: Colors.blue.shade100,
-                child: ListTile(
-                  title: Text(data['nombre']),
-                  subtitle: Text(
-                      'Precio: ${data['precio']} | Stock: ${data['stock']}'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit, color: Colors.purple),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => EditProduct(doc: data),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          service.deleteProducto(data.id);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-```
-
----
-
-# 9. ➕ AGREGAR PRODUCTO
-
-```dart
-import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
-
-class AddProduct extends StatelessWidget {
-  final _nombre = TextEditingController();
-  final _precio = TextEditingController();
-  final _stock = TextEditingController();
-
-  final FirestoreService service = FirestoreService();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Agregar Producto')),
-      body: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(controller: _nombre, decoration: InputDecoration(labelText: 'Nombre')),
-            TextField(controller: _precio, decoration: InputDecoration(labelText: 'Precio')),
-            TextField(controller: _stock, decoration: InputDecoration(labelText: 'Stock')),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                service.addProducto(
-                  _nombre.text,
-                  double.parse(_precio.text),
-                  int.parse(_stock.text),
-                );
-                Navigator.pop(context);
-              },
-              child: Text('Guardar'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-```
-
----
-
-# 10. ✏️ EDITAR PRODUCTO
-
-```dart
-import 'package:flutter/material.dart';
-import '../services/firestore_service.dart';
-
-class EditProduct extends StatelessWidget {
-  final doc;
-
-  EditProduct({required this.doc});
-
-  final FirestoreService service = FirestoreService();
-
-  @override
-  Widget build(BuildContext context) {
-    TextEditingController nombre = TextEditingController(text: doc['nombre']);
-    TextEditingController precio = TextEditingController(text: doc['precio'].toString());
-    TextEditingController stock = TextEditingController(text: doc['stock'].toString());
-
-    return Scaffold(
-      appBar: AppBar(title: Text('Editar Producto')),
-      body: Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(controller: nombre),
-            TextField(controller: precio),
-            TextField(controller: stock),
-            ElevatedButton(
-              onPressed: () {
-                service.updateProducto(
-                  doc.id,
-                  nombre.text,
-                  double.parse(precio.text),
-                  int.parse(stock.text),
-                );
-                Navigator.pop(context);
-              },
-              child: Text('Actualizar'),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-```
-
----
-
-# 11. 🧩 METODOLOGÍA (AGENTES - ROLES - SKILLS)
-
-### 🧠 AGENTES
-
-* UI Agent → Diseña interfaces
-* Backend Agent → Maneja Firebase
-* QA Agent → Pruebas
-
-### 🎭 ROLES
-
-* Desarrollador Flutter
-* Diseñador UI
-* Tester
-
-### 🛠 SKILLS
-
-* Flutter widgets
-* Firebase Firestore
-* Navegación
-* CRUD
-
-### 🔄 FLUJO
-
-1. Diseñar UI
-2. Conectar Firebase
-3. Crear CRUD
-4. Probar
-5. Mejorar UI
-
----
-
-# 12. 🎨 ESTILO VISUAL
-
-Colores sugeridos:
-
-* Morado: #6A1B9A
-* Azul: #0D47A1
-* Fondo claro
-* Cards suaves con sombras
-
----
-
-# ✅ RESULTADO FINAL
-
-✔ App funcional
-✔ CRUD completo
-✔ Conexión a Firebase
-✔ Diseño moderno
-
----
-
-Si quieres, en el siguiente paso puedo:
-👉 Convertir esto en una práctica tipo guía de laboratorio (con preguntas y evaluación)
-👉 O mejorar el diseño tipo app profesional como Webtoon/tienda real
+Este flujo asegura que el estudiante no solo copie código, sino que entienda la jerarquía de un sistema **CRUD** moderno. ¿Te gustaría que profundice en la validación de los formularios de entrada?
